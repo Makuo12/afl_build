@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=afl_fuzz
-#SBATCH --partition=afl_go
+#SBATCH --partition=normal_q
 #SBATCH --account=fuzzing
 #SBATCH --constraint=intel
 #SBATCH --time=01:30:00
