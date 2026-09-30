@@ -10,6 +10,8 @@
 #SBATCH --output=./logs/fuzz-%j.log
 #SBATCH --error=./logs/fuzz-%j.log
 
+#SBATCH --array=1
+
 set -euo pipefail
 
 module load GCCcore/14.3.0 LLVM/20.1.8-GCCcore-14.3.0
