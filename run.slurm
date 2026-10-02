@@ -10,7 +10,7 @@
 #SBATCH --output=./logs/fuzz-%j.log
 #SBATCH --error=./logs/fuzz-%j.log
 
-#SBATCH --array=1
+#SBATCH --array=1-3
 
 set -euo pipefail
 
