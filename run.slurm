@@ -28,8 +28,10 @@ ID="${SLURM_ARRAY_JOB_ID:-$SLURM_JOB_ID}_${SLURM_ARRAY_TASK_ID:-0}"
 FULL_ID="${PROGRAM}_${ID}"
 
 FUZZ_SECONDS=$((1 * 3600))
-
-SEED_DIR="$wrap/pdf"
+tmp_input="$TMPDIR/afl_${FULL_ID}"
+mkdir -p "$tmp_input"
+cp -rf "$wrap/pdf/." "$tmp_input/"
+SEED_DIR=$tmp_input
 SUT_PATH="$wrap/$PROGRAM"
 SUT_ARGS=(@@ /dev/null)
 
