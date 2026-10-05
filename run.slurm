@@ -3,14 +3,14 @@
 #SBATCH --partition=normal_q
 #SBATCH --account=fuzzing
 #SBATCH --constraint=intel
-#SBATCH --time=01:30:00
+#SBATCH --time=21:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem-per-cpu=4G
 #SBATCH --output=./logs/fuzz-%j.log
 #SBATCH --error=./logs/fuzz-%j.log
 
-#SBATCH --array=1-3
+#SBATCH --array=1-5
 
 set -euo pipefail
 
@@ -27,7 +27,7 @@ PROGRAM="pdftotext"
 ID="${SLURM_ARRAY_JOB_ID:-$SLURM_JOB_ID}_${SLURM_ARRAY_TASK_ID:-0}"
 FULL_ID="${PROGRAM}_${ID}"
 
-FUZZ_SECONDS=$((1 * 3600))
+FUZZ_SECONDS=$((20 * 3600))
 tmp_input="$TMPDIR/afl_${FULL_ID}"
 mkdir -p "$tmp_input"
 cp -rf "$wrap/pdf/." "$tmp_input/"
