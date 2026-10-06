@@ -50,7 +50,7 @@ SEED_DIR="$tmp_input"
 CPU=$(grep Cpus_allowed_list /proc/self/status | awk '{print $2}')
 
 # Build the mutator into a per-task path (no race between array tasks)
-gcc -shared -fPIC -O2 -o "$MUT_SO" "$MUT_SRC"
+gcc -shared -fPIC -O0 -o "$MUT_SO" "$MUT_SRC"
 
 # ---- Custom-mutator-only configuration ----
 export AFL_CUSTOM_MUTATOR_ONLY=1

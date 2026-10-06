@@ -16,19 +16,32 @@ module load GCCcore/14.3.0 LLVM/20.1.8-GCCcore-14.3.0 CMake/3.31.8-GCCcore-14.3.
 export PATH="$HOME/afl++/bin:$PATH"
 export AFL_PATH="$HOME/afl++/lib/afl"
 
+# Stop afl-cc from injecting -O3 -funroll-loops -D_FORTIFY_SOURCE=2
+export AFL_DONT_OPTIMIZE=1
+
 wrap="$HOME/afl_build"
 
-echo "Building xpdf with AFL++ instrumentation..."
+echo "Building xpdf with AFL++ instrumentation (-O0)..."
 cd "$wrap/xpdf-4.06_2"
 rm -rf build && mkdir build && cd build
 
-cmake -DCMAKE_BUILD_TYPE=Release \
+# Empty build type so CMake adds no -O2/-O3/-DNDEBUG of its own;
+# optimization level is set explicitly below.
+cmake -DCMAKE_BUILD_TYPE= \
+      -DCMAKE_C_FLAGS="-O0 -g -fno-inline" \
+      -DCMAKE_CXX_FLAGS="-O0 -g -fno-inline" \
       -DCMAKE_C_COMPILER=afl-clang-fast \
       -DCMAKE_CXX_COMPILER=afl-clang-fast++ \
       -DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY \
       ..
 
-make -j"$(nproc)"
+# Verify no stray -O2/-O3 in the actual compile commands
+make VERBOSE=1 -j"$(nproc)" 2>&1 | tee make.log
+if grep -E -- ' -O[123s]( |$)' make.log; then
+  echo "ERROR: optimization flag found in build" >&2
+  exit 1
+fi
+
 cp ./xpdf/pdftotext "$wrap/pdftotext"
 
 strings "$wrap/pdftotext" | grep -m1 __afl_area_ptr
