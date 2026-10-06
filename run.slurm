@@ -3,7 +3,7 @@
 #SBATCH --partition=normal_q
 #SBATCH --account=fuzzing
 #SBATCH --constraint=intel
-#SBATCH --time=01:00:00
+#SBATCH --time=06:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem-per-cpu=4G
@@ -26,7 +26,7 @@ PROGRAM="pdftotext"
 ID="${SLURM_ARRAY_JOB_ID:-${SLURM_JOB_ID:-0}}_${SLURM_ARRAY_TASK_ID:-0}"
 FULL_ID="${PROGRAM}_${ID}"
 
-FUZZ_SECONDS=$((1 * 3600))
+FUZZ_SECONDS=$((5 * 3600))
 
 tmp_base="${TMPDIR:-/tmp}"
 tmp_input="$tmp_base/afl_${FULL_ID}"
