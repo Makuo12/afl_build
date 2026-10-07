@@ -3,7 +3,7 @@
 #SBATCH --partition=normal_q
 #SBATCH --account=fuzzing
 #SBATCH --constraint=intel
-#SBATCH --time=06:00:00
+#SBATCH --time=03:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem-per-cpu=4G
@@ -26,7 +26,7 @@ PROGRAM="pdftotext"
 ID="${SLURM_ARRAY_JOB_ID:-${SLURM_JOB_ID:-0}}_${SLURM_ARRAY_TASK_ID:-0}"
 FULL_ID="${PROGRAM}_${ID}"
 
-FUZZ_SECONDS=$((5 * 3600))
+FUZZ_SECONDS=$((2 * 3600))
 
 tmp_base="${TMPDIR:-/tmp}"
 tmp_input="$tmp_base/afl_${FULL_ID}"
@@ -64,9 +64,19 @@ export AFL_NO_SYNC=1                    # don't import other instances' inputs
 
 rc=0
 # -d: skip AFL++'s deterministic stages, so only your mutator generates inputs
-afl-fuzz -d -i "$SEED_DIR" -o "$OUTROOT" -V "$FUZZ_SECONDS" \
+case $SLURM_ARRAY_TASK_ID in
+    1)
+    afl-fuzz -d -i "$SEED_DIR" -o "$OUTROOT" -V "$FUZZ_SECONDS" \
     -t 5000 -b "$CPU" -m 1536 -- \
     "$SUT_PATH" "${SUT_ARGS[@]}" || rc=$?
+    ;;
+    2)
+    afl-fuzz -Z -d -i "$SEED_DIR" -o "$OUTROOT" -V "$FUZZ_SECONDS" \
+    -t 5000 -b "$CPU" -m 1536 -- \
+    "$SUT_PATH" "${SUT_ARGS[@]}" || rc=$?
+    ;;
+    ;;
+esac
 echo "afl-fuzz exited with code $rc"
 
 if [ -f "$OUTROOT/default/fuzzer_stats" ]; then
