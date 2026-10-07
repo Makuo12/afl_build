@@ -49,8 +49,11 @@ SEED_DIR="$tmp_input"
 # Assumes one cpu per task
 CPU=$(grep Cpus_allowed_list /proc/self/status | awk '{print $2}')
 
+PERF_FLAGS="-O3 -funroll-loops -DNDEBUG -fno-stack-protector -fomit-frame-pointer -fno-semantic-interposition -fvisibility=hidden"
+
 # Build the mutator into a per-task path (no race between array tasks)
-gcc -shared -fPIC -O0 -o "$MUT_SO" "$MUT_SRC"
+gcc -shared -fPIC $PERF_FLAGS  -o "$MUT_SO" "$MUT_SRC"
+
 
 # ---- Custom-mutator-only configuration ----
 export AFL_CUSTOM_MUTATOR_ONLY=1
@@ -74,7 +77,6 @@ case $SLURM_ARRAY_TASK_ID in
     afl-fuzz -Z -d -i "$SEED_DIR" -o "$OUTROOT" -V "$FUZZ_SECONDS" \
     -t 5000 -b "$CPU" -m 1536 -- \
     "$SUT_PATH" "${SUT_ARGS[@]}" || rc=$?
-    ;;
     ;;
 esac
 echo "afl-fuzz exited with code $rc"
