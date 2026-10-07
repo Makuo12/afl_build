@@ -9,7 +9,7 @@
 #SBATCH --mem-per-cpu=4G
 #SBATCH --output=./logs/fuzz-%j.log
 #SBATCH --error=./logs/fuzz-%j.log
-#SBATCH --array=1-2
+#SBATCH --array=1-3
 
 set -euo pipefail
 
@@ -74,6 +74,11 @@ case $SLURM_ARRAY_TASK_ID in
     "$SUT_PATH" "${SUT_ARGS[@]}" || rc=$?
     ;;
     2)
+    afl-fuzz -d -i "$SEED_DIR" -o "$OUTROOT" -V "$FUZZ_SECONDS" \
+    -t 5000 -b "$CPU" -m 1536 -- \
+    "$SUT_PATH" "${SUT_ARGS[@]}" || rc=$?
+    ;;
+    3)
     afl-fuzz -Z -d -i "$SEED_DIR" -o "$OUTROOT" -V "$FUZZ_SECONDS" \
     -t 5000 -b "$CPU" -m 1536 -- \
     "$SUT_PATH" "${SUT_ARGS[@]}" || rc=$?
