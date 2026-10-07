@@ -49,10 +49,8 @@ SEED_DIR="$tmp_input"
 # Assumes one cpu per task
 CPU=$(grep Cpus_allowed_list /proc/self/status | awk '{print $2}')
 
-PERF_FLAGS="-O3 -funroll-loops -DNDEBUG -fno-stack-protector -fomit-frame-pointer -fno-semantic-interposition -fvisibility=hidden"
-
 # Build the mutator into a per-task path (no race between array tasks)
-gcc -shared -fPIC $PERF_FLAGS  -o "$MUT_SO" "$MUT_SRC"
+gcc -shared -fPIC -o "$MUT_SO" "$MUT_SRC"
 
 
 # ---- Custom-mutator-only configuration ----
