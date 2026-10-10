@@ -20,6 +20,12 @@ export AFL_PATH="$HOME/afl++/lib/afl"
 export AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1
 export AFL_SKIP_CPUFREQ=1
 export AFL_NO_UI=1
+export AFL_NO_FORKSRV=1  
+export AFL_NO_AFFINITY=1
+# ---- Custom-mutator-only configuration ----
+export AFL_DISABLE_TRIM=1
+export AFL_FAST_CAL=1                   # fewer calibration runs (3 instead of 4 on stable inputs)
+export AFL_NO_SYNC=1                    # don't import other instances' inputs
 
 wrap="$HOME/afl_build"
 PROGRAM="pdftotext"
@@ -53,12 +59,6 @@ CPU=$(grep Cpus_allowed_list /proc/self/status | awk '{print $2}')
 gcc -shared -fPIC -o "$MUT_SO" "$MUT_SRC"
 
 
-# ---- Custom-mutator-only configuration ----
-export AFL_CUSTOM_MUTATOR_ONLY=1
-export AFL_CUSTOM_MUTATOR_LIBRARY="$MUT_SO"
-export AFL_DISABLE_TRIM=1
-export AFL_FAST_CAL=1                   # fewer calibration runs (3 instead of 4 on stable inputs)
-export AFL_NO_SYNC=1                    # don't import other instances' inputs
 # FrameShift analysis is on by default in your build. Find the disable variable
 # in docs/env_variables.md (search "frameshift") and export it here, e.g.:
 # export AFL_<FRAMESHIFT_DISABLE_VAR>=1
