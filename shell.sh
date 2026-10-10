@@ -7,7 +7,7 @@ llvm-config --version        # should print 20.1.8
 
 # git clone https://github.com/AFLplusplus/AFLplusplus
 cd AFLplusplus
-git checkout stable          # or use the default branch if stable is too old for LLVM 20
+git checkout makuo          # or use the default branch if stable is too old for LLVM 20
 
 make clean
 make source-only LLVM_CONFIG=$LLVM_CONFIG NO_NYX=1 -j8
