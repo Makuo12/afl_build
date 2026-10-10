@@ -68,17 +68,17 @@ rc=0
 case $SLURM_ARRAY_TASK_ID in
     1)
     afl-fuzz -d -i "$SEED_DIR" -o "$OUTROOT" -V "$FUZZ_SECONDS" \
-    -t 5000 -b "$CPU" -m 1536 -- \
+    -t 5000 -m 1536 -- \
     "$SUT_PATH" "${SUT_ARGS[@]}" || rc=$?
     ;;
     2)
     afl-fuzz -d -i "$SEED_DIR" -o "$OUTROOT" -V "$FUZZ_SECONDS" \
-    -t 1000 -b "$CPU" -m 1536 -- \
+    -t 1000 -m 1536 -- \
     "$SUT_PATH" "${SUT_ARGS[@]}" || rc=$?
     ;;
     3)
     afl-fuzz -Z -d -i "$SEED_DIR" -o "$OUTROOT" -V "$FUZZ_SECONDS" \
-    -t 1000 -b "$CPU" -m 1536 -- \
+    -t 1000 -m 1536 -- \
     "$SUT_PATH" "${SUT_ARGS[@]}" || rc=$?
     ;;
 esac
