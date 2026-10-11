@@ -20,19 +20,22 @@ export AFL_PATH="$HOME/afl++/lib/afl"
 export AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1
 export AFL_SKIP_CPUFREQ=1
 export AFL_NO_UI=1
-export AFL_NO_FORKSRV=1  
 export AFL_NO_AFFINITY=1
-# ---- Custom-mutator-only configuration ----
+
 export AFL_DISABLE_TRIM=1
 export AFL_FAST_CAL=1                   # fewer calibration runs (3 instead of 4 on stable inputs)
 export AFL_NO_SYNC=1                    # don't import other instances' inputs
+
+if [[ "${1:-}" = "exe" ]]; then
+  export AFL_NO_FORKSRV=1  
+fi
 
 wrap="$HOME/afl_build"
 PROGRAM="pdftotext"
 ID="${SLURM_ARRAY_JOB_ID:-${SLURM_JOB_ID:-0}}_${SLURM_ARRAY_TASK_ID:-0}"
 FULL_ID="${PROGRAM}_${ID}"
 
-FUZZ_SECONDS=$((1 * 3600))
+FUZZ_SECONDS=$((24 * 3600))
 
 tmp_base="${TMPDIR:-/tmp}"
 tmp_input="$tmp_base/afl_${FULL_ID}"
@@ -67,18 +70,23 @@ rc=0
 # -d: skip AFL++'s deterministic stages, so only your mutator generates inputs
 case $SLURM_ARRAY_TASK_ID in
     1)
-    afl-fuzz -d -i "$SEED_DIR" -o "$OUTROOT" -V "$FUZZ_SECONDS" \
+    $HOME/afl-fuzz -d -i "$SEED_DIR" -o "$OUTROOT" -V "$FUZZ_SECONDS" \
     -t 5000 -m 1536 -- \
     "$SUT_PATH" "${SUT_ARGS[@]}" || rc=$?
     ;;
     2)
     afl-fuzz -d -i "$SEED_DIR" -o "$OUTROOT" -V "$FUZZ_SECONDS" \
-    -t 1000 -m 1536 -- \
+    -t 5000 -m 1536 -- \
     "$SUT_PATH" "${SUT_ARGS[@]}" || rc=$?
     ;;
     3)
     afl-fuzz -Z -d -i "$SEED_DIR" -o "$OUTROOT" -V "$FUZZ_SECONDS" \
-    -t 1000 -m 1536 -- \
+    -t 5000 -m 1536 -- \
+    "$SUT_PATH" "${SUT_ARGS[@]}" || rc=$?
+    ;;
+    4)
+    afl-fuzz -Z -d -i "$SEED_DIR" -o "$OUTROOT" -V "$FUZZ_SECONDS" \
+    -t 5000 -m 1536 -- \
     "$SUT_PATH" "${SUT_ARGS[@]}" || rc=$?
     ;;
 esac

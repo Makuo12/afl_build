@@ -13,6 +13,12 @@ make clean
 make source-only LLVM_CONFIG=$LLVM_CONFIG NO_NYX=1 -j8
 make install PREFIX=$HOME/afl++
 
-export PATH="$HOME/afl++/bin:$PATH"
-afl-fuzz -h
-afl-clang-fast --version
+git checkout makuo
+
+make clean
+make source-only LLVM_CONFIG=$LLVM_CONFIG NO_NYX=1 -j8
+make install PREFIX=$HOME/afl-makuo++
+
+# export PATH="$HOME/afl++/bin:$PATH"
+# afl-fuzz -h
+# afl-clang-fast --version
