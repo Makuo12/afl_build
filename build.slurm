@@ -9,6 +9,7 @@
 #SBATCH --mem-per-cpu=4G
 #SBATCH --output=./logs/build-%j.log
 #SBATCH --error=./logs/build-%j.log
+#SBATCH --array=1-2
 
 set -euo pipefail
 
