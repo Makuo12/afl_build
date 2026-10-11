@@ -36,4 +36,5 @@ case $SLURM_ARRAY_TASK_ID in
     make clean
     make source-only LLVM_CONFIG=$LLVM_CONFIG NO_NYX=1 -j8
     make install PREFIX=$HOME/afl-makuo++
+    ;;
 esac

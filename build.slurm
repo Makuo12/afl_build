@@ -13,23 +13,46 @@
 set -euo pipefail
 
 module load GCCcore/14.3.0 LLVM/20.1.8-GCCcore-14.3.0 CMake/3.31.8-GCCcore-14.3.0
-export PATH="$HOME/afl++/bin:$PATH"
-export AFL_PATH="$HOME/afl++/lib/afl"
-
 wrap="$HOME/afl_build"
 
-echo "Building xpdf with AFL++ instrumentation..."
-cd "$wrap/xpdf-4.06_2"
-rm -rf build && mkdir build && cd build
 
-cmake -DCMAKE_BUILD_TYPE=Release \
-      -DCMAKE_C_COMPILER=afl-clang-fast \
-      -DCMAKE_CXX_COMPILER=afl-clang-fast++ \
-      -DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY \
-      ..
+case $SLURM_ARRAY_TASK_ID in
+      1)
+      export PATH="$HOME/afl++/bin:$PATH"
+      export AFL_PATH="$HOME/afl++/lib/afl"
+      
+      echo "Building xpdf with AFL++ instrumentation..."
 
-make -j"$(nproc)"
-cp ./xpdf/pdftotext "$wrap/pdftotext"
+      cmake -S "$wrap/xpdf-4.06_2" -B "$wrap/xpdf-4.06_2/build" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER=afl-clang-fast \
+            -DCMAKE_CXX_COMPILER=afl-clang-fast++ \
+            -DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY \
+            ..
 
-strings "$wrap/pdftotext" | grep -m1 __afl_area_ptr
-afl-showmap -o /dev/null -- "$wrap/pdftotext" some.pdf /dev/null
+      cmake --build "$wrap/xpdf-4.06_2/build" -j"$(nproc)"
+
+      mv "$wrap/xpdf-4.06_2/build/xpdf/pdftotext" "$wrap/pdftotext.stable"
+      strings "$wrap/pdftotext.stable" | grep -m1 __afl_area_ptr
+      afl-showmap -o /dev/null -- "$wrap/pdftotext.stable" some.pdf /dev/null
+      ;;
+      2)
+      export PATH="$HOME/afl-makuo++/bin:$PATH"
+      export AFL_PATH="$HOME/afl-makuo++/lib/afl"
+
+      echo "Building xpdf with AFL++ instrumentation..."
+
+      cmake -S "$wrap/xpdf-4.06_2" -B "$wrap/xpdf-4.06_2/build" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER=afl-clang-fast \
+            -DCMAKE_CXX_COMPILER=afl-clang-fast++ \
+            -DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY \
+            ..
+
+      cmake --build "$wrap/xpdf-4.06_2/build" -j"$(nproc)"
+
+      mv "$wrap/xpdf-4.06_2/build/xpdf/pdftotext" "$wrap/pdftotext.makuo"
+      strings "$wrap/pdftotext.makuo" | grep -m1 __afl_area_ptr
+      afl-showmap -o /dev/null -- "$wrap/pdftotext.makuo" some.pdf /dev/null
+      ;;
+esac
