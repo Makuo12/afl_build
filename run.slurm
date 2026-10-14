@@ -2,7 +2,7 @@
 #SBATCH --job-name=afl_fuzz
 #SBATCH --partition=normal_q
 #SBATCH --account=fuzzing
-#SBATCH --constraint=intel
+#SBATCH --nodelist=tc-intel012
 #SBATCH --time=26:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
@@ -12,6 +12,8 @@
 #SBATCH --array=1-5
 
 set -euo pipefail
+
+echo "node=$(hostname -s) cpu=$(lscpu | grep 'Model name' | sed 's/.*: *//')"
 
 module load GCCcore/14.3.0 LLVM/20.1.8-GCCcore-14.3.0
 
