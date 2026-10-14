@@ -15,5 +15,5 @@ set -euo pipefail
 
 wrap="$HOME/afl_build"
 
-cp -rf $wrap/results/. $wrap/results/../reference/afl_run_results
+cp -rf $wrap/results/. $wrap/../reference/afl_run_results
 
