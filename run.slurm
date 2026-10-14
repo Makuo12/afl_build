@@ -3,13 +3,13 @@
 #SBATCH --partition=normal_q
 #SBATCH --account=fuzzing
 #SBATCH --constraint=intel
-#SBATCH --time=26:00:00
+#SBATCH --time=25:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --mem-per-cpu=4G
-#SBATCH --output=./logs/fuzz-%A_%a.log
-#SBATCH --error=./logs/fuzz-%A_%a.log
-#SBATCH --array=1-10
+#SBATCH --mem-per-cpu=8G
+#SBATCH --output=./logs/afl_fuzz-%A_%a.log
+#SBATCH --error=./logs/afl_fuzz-%A_%a.log
+#SBATCH --array=1-5
 
 set -euo pipefail
 
@@ -40,20 +40,23 @@ RESULTS_DIR="$wrap/results"               # persistent results
 SUT_ARGS=(@@ /dev/null)
 
 # Pick toolchain and binary variant for this task
-case "$SLURM_ARRAY_TASK_ID" in
-  1|2|3|4|5)
-    VARIANT="stable"
-    AFL_ROOT="$HOME/afl++"
-    ;;
-  6|7|8|9|10)
-    VARIANT="makuo"
-    AFL_ROOT="$HOME/afl-makuo++"
-    ;;
-  *)
-    echo "Unsupported array task ID: $SLURM_ARRAY_TASK_ID" >&2
-    exit 1
-    ;;
-esac
+# case "$SLURM_ARRAY_TASK_ID" in
+#   1|2|3|4|5)
+#     VARIANT="stable"
+#     AFL_ROOT="$HOME/afl++"
+#     ;;
+#   6|7|8|9|10)
+#     VARIANT="makuo"
+#     AFL_ROOT="$HOME/afl-makuo++"
+#     ;;
+#   *)
+#     echo "Unsupported array task ID: $SLURM_ARRAY_TASK_ID" >&2
+#     exit 1
+#     ;;
+# esac
+
+VARIANT="stable"
+AFL_ROOT="$HOME/afl++"
 
 export PATH="$AFL_ROOT/bin:$PATH"
 export AFL_PATH="$AFL_ROOT/lib/afl"
@@ -84,7 +87,7 @@ save_results() {
 # Run in background so a Slurm SIGTERM (timeout/cancel) still lets us save results
 rc=0
 afl-fuzz -d -i "$tmp_input" -o "$OUTROOT" -V "$FUZZ_SECONDS" \
-  -t 5000 -m 2048 -- \
+  -t 5000 -m 4096 -- \
   "$SUT_PATH" "${SUT_ARGS[@]}" &
 FUZZ_PID=$!
 
