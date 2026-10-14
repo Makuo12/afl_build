@@ -3,12 +3,12 @@
 #SBATCH --partition=normal_q
 #SBATCH --account=fuzzing
 #SBATCH --constraint=intel
-#SBATCH --time=25:00:00
+#SBATCH --time=26:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem-per-cpu=4G
-#SBATCH --output=./logs/afl_fuzz-%A_%a.log
-#SBATCH --error=./logs/afl_fuzz-%A_%a.log
+#SBATCH --output=./logs/fuzz-%A_%a.log
+#SBATCH --error=./logs/fuzz-%A_%a.log
 #SBATCH --array=1-5
 
 set -euo pipefail
@@ -38,22 +38,6 @@ OUTROOT="$tmp_base/$FULL_ID"              # fuzzer output (wiped at job end)
 RESULTS_DIR="$wrap/results"               # persistent results
 
 SUT_ARGS=(@@ /dev/null)
-
-# Pick toolchain and binary variant for this task
-# case "$SLURM_ARRAY_TASK_ID" in
-#   1|2|3|4|5)
-#     VARIANT="stable"
-#     AFL_ROOT="$HOME/afl++"
-#     ;;
-#   6|7|8|9|10)
-#     VARIANT="makuo"
-#     AFL_ROOT="$HOME/afl-makuo++"
-#     ;;
-#   *)
-#     echo "Unsupported array task ID: $SLURM_ARRAY_TASK_ID" >&2
-#     exit 1
-#     ;;
-# esac
 
 VARIANT="stable"
 AFL_ROOT="$HOME/afl++"
