@@ -6,7 +6,7 @@
 #SBATCH --time=25:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --mem-per-cpu=8G
+#SBATCH --mem-per-cpu=4G
 #SBATCH --output=./logs/afl_fuzz-%A_%a.log
 #SBATCH --error=./logs/afl_fuzz-%A_%a.log
 #SBATCH --array=1-5
@@ -87,7 +87,7 @@ save_results() {
 # Run in background so a Slurm SIGTERM (timeout/cancel) still lets us save results
 rc=0
 afl-fuzz -d -i "$tmp_input" -o "$OUTROOT" -V "$FUZZ_SECONDS" \
-  -t 5000 -m 4096 -- \
+  -t 5000 -m 2048 -- \
   "$SUT_PATH" "${SUT_ARGS[@]}" &
 FUZZ_PID=$!
 
