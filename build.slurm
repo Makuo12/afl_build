@@ -2,7 +2,7 @@
 #SBATCH --job-name=afl_build
 #SBATCH --partition=normal_q
 #SBATCH --account=fuzzing
-#SBATCH --constraint=intel
+#SBATCH --constraint=amd
 #SBATCH --time=00:30:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4
@@ -18,21 +18,8 @@ module load GCCcore/14.3.0 LLVM/20.1.8-GCCcore-14.3.0 CMake/3.31.8-GCCcore-14.3.
 wrap="$HOME/afl_build"
 SRC="$wrap/xpdf-4.06_2"
 
-# Per-task settings: each task uses its own AFL toolchain and its own build dir
-case "$SLURM_ARRAY_TASK_ID" in
-  1)
-    TAG="stable"
-    AFL_ROOT="$HOME/afl++"
-    ;;
-  2)
-    TAG="makuo"
-    AFL_ROOT="$HOME/afl-makuo++"
-    ;;
-  *)
-    echo "Unsupported array task ID: $SLURM_ARRAY_TASK_ID" >&2
-    exit 1
-    ;;
-esac
+TAG="stable"
+AFL_ROOT="$HOME/afl++"
 
 export PATH="$AFL_ROOT/bin:$PATH"
 export AFL_PATH="$AFL_ROOT/lib/afl"

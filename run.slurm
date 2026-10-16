@@ -2,11 +2,11 @@
 #SBATCH --job-name=afl_fuzz
 #SBATCH --partition=normal_q
 #SBATCH --account=fuzzing
-#SBATCH --nodelist=tc-intel012
 #SBATCH --time=26:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --mem-per-cpu=4G
+#SBATCH --constraint=amd
+#SBATCH --mem-per-cpu=8G
 #SBATCH --output=./logs/fuzz-%A_%a.log
 #SBATCH --error=./logs/fuzz-%A_%a.log
 #SBATCH --array=1-5
@@ -73,7 +73,7 @@ save_results() {
 # Run in background so a Slurm SIGTERM (timeout/cancel) still lets us save results
 rc=0
 afl-fuzz -d -i "$tmp_input" -o "$OUTROOT" -V "$FUZZ_SECONDS" \
-  -t 5000 -m 2048 -- \
+  -t 10000 -m 4096 -- \
   "$SUT_PATH" "${SUT_ARGS[@]}" &
 FUZZ_PID=$!
 
