@@ -30,7 +30,7 @@ PROGRAM="pdftotext"
 ID="${SLURM_ARRAY_JOB_ID:-${SLURM_JOB_ID:-0}}_${SLURM_ARRAY_TASK_ID:-0}"
 FULL_ID="${PROGRAM}_${ID}"
 
-FUZZ_SECONDS=$((24 * 3600))
+FUZZ_SECONDS=$((2 * 3600))
 
 tmp_base="${TMPDIR:-/tmp}"
 tmp_input="$tmp_base/afl_${FULL_ID}"      # seeds (node-local)
