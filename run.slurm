@@ -5,8 +5,8 @@
 #SBATCH --time=25:30:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --constraint=amd
-#SBATCH --mem-per-cpu=8G
+#SBATCH --mem-per-cpu=4G
+#SBATCH --exclusive
 #SBATCH --output=./logs/fuzz-%A_%a.log
 #SBATCH --error=./logs/fuzz-%A_%a.log
 #SBATCH --array=1-10
@@ -92,7 +92,7 @@ trap '[ -n "$FUZZ_PID" ] && kill -TERM "$FUZZ_PID" 2>/dev/null || true' TERM INT
 rc=0
 timeout --signal=TERM --kill-after=120 "$FUZZ_SECONDS" \
   afl-fuzz -d -i "$tmp_input" -o "$OUTROOT" \
-    -t 5000 -m 4096 -- \
+    -t 5000 -m 2048 -- \
     "$SUT_PATH" "${SUT_ARGS[@]}" &
 FUZZ_PID=$!
 
