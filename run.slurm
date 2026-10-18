@@ -6,7 +6,6 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem-per-cpu=4G
-#SBATCH --exclusive
 #SBATCH --output=./logs/fuzz-%A_%a.log
 #SBATCH --error=./logs/fuzz-%A_%a.log
 #SBATCH --array=1-10
