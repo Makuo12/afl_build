@@ -2,7 +2,7 @@
 #SBATCH --job-name=afl_fuzz
 #SBATCH --partition=normal_q
 #SBATCH --account=fuzzing
-#SBATCH --time=26:00:00
+#SBATCH --time=25:30:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --constraint=amd
@@ -43,7 +43,7 @@ fi
 ID="${SLURM_ARRAY_JOB_ID:-${SLURM_JOB_ID:-0}}_${TASK}"
 FULL_ID="${PROGRAM}_${VARIANT}_${ID}"
 
-FUZZ_SECONDS=$((2 * 3600))
+FUZZ_SECONDS=$((24 * 3600))
 
 tmp_base="${TMPDIR:-/tmp}"
 tmp_input="$tmp_base/afl_${FULL_ID}"      # seeds (node-local)
