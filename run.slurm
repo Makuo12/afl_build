@@ -9,7 +9,7 @@
 #SBATCH --mem-per-cpu=8G
 #SBATCH --output=./logs/fuzz-%A_%a.log
 #SBATCH --error=./logs/fuzz-%A_%a.log
-#SBATCH --array=1-5
+#SBATCH --array=1-10
 
 set -euo pipefail
 
@@ -21,14 +21,27 @@ export AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1
 export AFL_SKIP_CPUFREQ=1
 export AFL_NO_UI=1
 export AFL_NO_AFFINITY=1
-export AFL_DISABLE_TRIM=1
-export AFL_FAST_CAL=1
-export AFL_NO_SYNC=1
+export AFL_DISABLE_TRIM=1   # AFL++ only; ignored by original AFL
+export AFL_FAST_CAL=1       # AFL++ only; ignored by original AFL
+export AFL_NO_SYNC=1        # AFL++ only; ignored by original AFL
 
 wrap="$HOME/afl_build"
 PROGRAM="pdftotext"
-ID="${SLURM_ARRAY_JOB_ID:-${SLURM_JOB_ID:-0}}_${SLURM_ARRAY_TASK_ID:-0}"
-FULL_ID="${PROGRAM}_${ID}"
+
+# Array tasks 1-5 -> AFL++ (stable), tasks 6-10 -> original AFL (2.52b)
+TASK="${SLURM_ARRAY_TASK_ID:-1}"
+if (( TASK <= 5 )); then
+  VARIANT="stable"
+  AFL_ROOT="$HOME/afl++"
+  STATS_SUBDIR="default"    # AFL++ puts instance output in <out>/default/
+else
+  VARIANT="orig"
+  AFL_ROOT="$HOME/afl-orig"
+  STATS_SUBDIR=""           # original AFL writes directly into <out>/
+fi
+
+ID="${SLURM_ARRAY_JOB_ID:-${SLURM_JOB_ID:-0}}_${TASK}"
+FULL_ID="${PROGRAM}_${VARIANT}_${ID}"
 
 FUZZ_SECONDS=$((2 * 3600))
 
@@ -41,9 +54,7 @@ RESULTS_DIR="$wrap/results"               # persistent results
 
 SUT_ARGS=(@@ /dev/null)
 
-VARIANT="stable"
-AFL_ROOT="$HOME/afl++"
-
+# Only this variant's AFL on PATH, so the identically named tools don't collide
 export PATH="$AFL_ROOT/bin:$PATH"
 export AFL_PATH="$AFL_ROOT/lib/afl"
 
@@ -60,30 +71,36 @@ cp -rf "$wrap/pdf/." "$tmp_input/"
 
 cd "$WORK_DIR"
 
-echo "Task $SLURM_ARRAY_TASK_ID: variant=$VARIANT afl=$AFL_ROOT node=$(hostname)"
+echo "Task $TASK: variant=$VARIANT afl=$AFL_ROOT node=$(hostname)"
+afl-fuzz -h 2>&1 | head -n 1 || true
 
 save_results() {
-  if [ -f "$OUTROOT/default/fuzzer_stats" ]; then
-    cp "$OUTROOT/default/fuzzer_stats" "$RESULTS_DIR/fuzzer_stats_$FULL_ID" || true
+  local stats="$OUTROOT${STATS_SUBDIR:+/$STATS_SUBDIR}/fuzzer_stats"
+  if [ -f "$stats" ]; then
+    cp "$stats" "$RESULTS_DIR/fuzzer_stats_$FULL_ID" || true
   fi
   # Tar from the parent so the archive contains only "$FULL_ID/..."
   tar -C "$(dirname "$OUTROOT")" -czf "$RESULTS_DIR/$FULL_ID.out.tar.gz" "$FULL_ID" || true
 }
 
-# Run in background so a Slurm SIGTERM (timeout/cancel) still lets us save results
-rc=0
-afl-fuzz -d -i "$tmp_input" -o "$OUTROOT" -V "$FUZZ_SECONDS" \
-  -t 10000 -m 4096 -- \
-  "$SUT_PATH" "${SUT_ARGS[@]}" &
-FUZZ_PID=$!
+# Original AFL has no -V (time limit), so use `timeout` for both variants.
+# SIGTERM makes afl-fuzz stop gracefully and flush fuzzer_stats / queue.
+# (timeout exits 124 when it hits the limit, which is the normal outcome here.)
+FUZZ_PID=""
+trap '[ -n "$FUZZ_PID" ] && kill -TERM "$FUZZ_PID" 2>/dev/null || true' TERM INT
 
-trap 'kill -TERM "$FUZZ_PID" 2>/dev/null || true' TERM INT
+rc=0
+timeout --signal=TERM --kill-after=120 "$FUZZ_SECONDS" \
+  afl-fuzz -d -i "$tmp_input" -o "$OUTROOT" \
+    -t 5000 -m 4096 -- \
+    "$SUT_PATH" "${SUT_ARGS[@]}" &
+FUZZ_PID=$!
 
 wait "$FUZZ_PID" || rc=$?
 # a trapped signal interrupts the first wait; wait again for afl-fuzz to finish
 wait "$FUZZ_PID" 2>/dev/null || true
 trap - TERM INT
 
-echo "afl-fuzz exited with code $rc"
+echo "afl-fuzz exited with code $rc (124 = reached time limit)"
 
 save_results
