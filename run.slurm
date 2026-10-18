@@ -8,7 +8,7 @@
 #SBATCH --mem-per-cpu=4G
 #SBATCH --output=./logs/fuzz-%A_%a.log
 #SBATCH --error=./logs/fuzz-%A_%a.log
-#SBATCH --array=1-10
+#SBATCH --array=1-6
 
 set -euo pipefail
 
@@ -29,7 +29,7 @@ PROGRAM="pdftotext"
 
 # Array tasks 1-5 -> AFL++ (stable), tasks 6-10 -> original AFL (2.52b)
 TASK="${SLURM_ARRAY_TASK_ID:-1}"
-if (( TASK <= 5 )); then
+if (( TASK <= 3 )); then
   VARIANT="stable"
   AFL_ROOT="$HOME/afl++"
   STATS_SUBDIR="default"    # AFL++ puts instance output in <out>/default/
