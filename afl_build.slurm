@@ -54,8 +54,8 @@ cd "$BUILD_DIR/AFL"
 
 make clean
 # Old code vs. GCC 14: relax warnings-as-errors / strict defaults if needed
-make -j"$JOBS" CFLAGS="-O3 -funroll-loops -Wno-error -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -fcommon"
-make install PREFIX="$HOME/afl-orig"
+AFL_NO_X86=1 make -j"$JOBS" CFLAGS="-O3 -funroll-loops -Wno-error -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -fcommon"
+AFL_NO_X86=1 make install PREFIX="$HOME/afl-orig"
 
 ###############################################################################
 # Sanity check
