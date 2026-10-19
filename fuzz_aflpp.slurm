@@ -1,14 +1,14 @@
 #!/bin/bash
-#SBATCH --job-name=afl_fuzz
+#SBATCH --job-name=aflpp_fuzz
 #SBATCH --partition=normal_q
 #SBATCH --account=fuzzing
 #SBATCH --time=25:30:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem-per-cpu=4G
-#SBATCH --output=./logs/fuzz-%A_%a.log
-#SBATCH --error=./logs/fuzz-%A_%a.log
-#SBATCH --array=1-6
+#SBATCH --output=./logs/aflpp-%A_%a.log
+#SBATCH --error=./logs/aflpp-%A_%a.log
+#SBATCH --array=1-3
 
 set -euo pipefail
 
@@ -20,25 +20,17 @@ export AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1
 export AFL_SKIP_CPUFREQ=1
 export AFL_NO_UI=1
 export AFL_NO_AFFINITY=1
-export AFL_DISABLE_TRIM=1   # AFL++ only; ignored by original AFL
-export AFL_FAST_CAL=1       # AFL++ only; ignored by original AFL
-export AFL_NO_SYNC=1        # AFL++ only; ignored by original AFL
+export AFL_DISABLE_TRIM=1
+export AFL_FAST_CAL=1
+export AFL_NO_SYNC=1
 
 wrap="$HOME/afl_build"
 PROGRAM="pdftotext"
+VARIANT="stable"
+AFL_ROOT="$HOME/afl++"
+STATS_SUBDIR="default"      # AFL++ puts instance output in <out>/default/
 
-# Array tasks 1-5 -> AFL++ (stable), tasks 6-10 -> original AFL (2.52b)
 TASK="${SLURM_ARRAY_TASK_ID:-1}"
-if (( TASK <= 3 )); then
-  VARIANT="stable"
-  AFL_ROOT="$HOME/afl++"
-  STATS_SUBDIR="default"    # AFL++ puts instance output in <out>/default/
-else
-  VARIANT="orig"
-  AFL_ROOT="$HOME/afl-orig"
-  STATS_SUBDIR=""           # original AFL writes directly into <out>/
-fi
-
 ID="${SLURM_ARRAY_JOB_ID:-${SLURM_JOB_ID:-0}}_${TASK}"
 FULL_ID="${PROGRAM}_${VARIANT}_${ID}"
 
@@ -46,20 +38,18 @@ FUZZ_SECONDS=$((24 * 3600))
 
 tmp_base="${TMPDIR:-/tmp}"
 tmp_input="$tmp_base/afl_${FULL_ID}"      # seeds (node-local)
-BIN_DIR="$tmp_base/bin_${FULL_ID}"        # this task's private binary copy (node-local)
+BIN_DIR="$tmp_base/bin_${FULL_ID}"        # private binary copy (node-local)
 WORK_DIR="$tmp_base/work_${FULL_ID}"      # cwd, so ./output/... files are per-task
 OUTROOT="$tmp_base/$FULL_ID"              # fuzzer output (wiped at job end)
 RESULTS_DIR="$wrap/results"               # persistent results
 
 SUT_ARGS=(@@ /dev/null)
 
-# Only this variant's AFL on PATH, so the identically named tools don't collide
 export PATH="$AFL_ROOT/bin:$PATH"
 export AFL_PATH="$AFL_ROOT/lib/afl"
 
 mkdir -p "$tmp_input" "$BIN_DIR" "$WORK_DIR/output" "$OUTROOT" "$RESULTS_DIR"
 
-# Private, node-local copy of only the binary in use (safe if it patches itself)
 SUT_PATH="$BIN_DIR/$PROGRAM.$VARIANT"
 cp "$wrap/$PROGRAM.$VARIANT" "$SUT_PATH"
 chmod +x "$SUT_PATH"
@@ -74,17 +64,13 @@ echo "Task $TASK: variant=$VARIANT afl=$AFL_ROOT node=$(hostname)"
 afl-fuzz -h 2>&1 | head -n 1 || true
 
 save_results() {
-  local stats="$OUTROOT${STATS_SUBDIR:+/$STATS_SUBDIR}/fuzzer_stats"
+  local stats="$OUTROOT/$STATS_SUBDIR/fuzzer_stats"
   if [ -f "$stats" ]; then
     cp "$stats" "$RESULTS_DIR/fuzzer_stats_$FULL_ID" || true
   fi
-  # Tar from the parent so the archive contains only "$FULL_ID/..."
   tar -C "$(dirname "$OUTROOT")" -czf "$RESULTS_DIR/$FULL_ID.out.tar.gz" "$FULL_ID" || true
 }
 
-# Original AFL has no -V (time limit), so use `timeout` for both variants.
-# SIGTERM makes afl-fuzz stop gracefully and flush fuzzer_stats / queue.
-# (timeout exits 124 when it hits the limit, which is the normal outcome here.)
 FUZZ_PID=""
 trap '[ -n "$FUZZ_PID" ] && kill -TERM "$FUZZ_PID" 2>/dev/null || true' TERM INT
 
@@ -96,7 +82,6 @@ timeout --signal=TERM --kill-after=120 "$FUZZ_SECONDS" \
 FUZZ_PID=$!
 
 wait "$FUZZ_PID" || rc=$?
-# a trapped signal interrupts the first wait; wait again for afl-fuzz to finish
 wait "$FUZZ_PID" 2>/dev/null || true
 trap - TERM INT
 
