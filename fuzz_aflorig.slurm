@@ -3,12 +3,13 @@
 #SBATCH --partition=normal_q
 #SBATCH --account=fuzzing
 #SBATCH --time=25:30:00
+#SBATCH --constraint=amd
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem-per-cpu=4G
 #SBATCH --output=./logs/aflorig-%A_%a.log
 #SBATCH --error=./logs/aflorig-%A_%a.log
-#SBATCH --array=1-3
+#SBATCH --array=1-5
 
 set -euo pipefail
 
