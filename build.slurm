@@ -17,7 +17,7 @@
 #   local:   ./build_xpdf.sh              # builds both variants, one after the other
 #            ./build_xpdf.sh stable       # only AFL++
 #            ./build_xpdf.sh orig         # only original AFL
-#            (optional: WRAP=/path/to/dir ./build_xpdf.sh)
+#            (run from the dir containing xpdf-4.06_2/, pdf/, etc.)
 
 set -euo pipefail
 
@@ -34,7 +34,7 @@ if [[ "${1:-}" = "arc" ]]; then
     esac
 else
     # local linux machine
-    wrap="${WRAP:-$HOME/afl_build}"
+    wrap="$(pwd)"
     JOBS="${JOBS:-$(nproc)}"
     case "${1:-both}" in
       stable) TAGS=(stable) ;;
@@ -45,6 +45,7 @@ else
 fi
 
 SRC="$wrap/xpdf-4.06_2"
+[ -f "$SRC/CMakeLists.txt" ] || { echo "No CMakeLists.txt in $SRC" >&2; exit 1; }
 
 build_variant() {
   local TAG="$1"

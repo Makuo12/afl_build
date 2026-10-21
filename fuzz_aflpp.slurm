@@ -14,7 +14,7 @@
 # Usage:
 #   cluster: mkdir -p logs && sbatch fuzz_aflpp.sh arc
 #   local:   ./fuzz_aflpp.sh
-#            (optional: WRAP=/path/to/dir FUZZ_SECONDS=3600 ./fuzz_aflpp.sh)
+#            (run from the dir containing pdftotext.<variant> and pdf/; optional: FUZZ_SECONDS=3600 ./fuzz_aflpp.sh)
 
 set -euo pipefail
 
@@ -44,7 +44,7 @@ if [[ "${1:-}" = "arc" ]]; then
     tmp_base="${TMPDIR:-/tmp}"
 else
     # local linux machine
-    wrap="${WRAP:-$HOME/afl_build}"
+    wrap="$(pwd)"
     TASK=1
     ID="local_$(date +%s)_$$"
     tmp_base="/tmp"
