@@ -10,16 +10,36 @@
 #SBATCH --output=./logs/build-%j.log
 #SBATCH --error=./logs/build-%j.log
 
+# Usage:
+#   cluster: mkdir -p logs && sbatch build_afl.sh arc
+#   local:   ./build_afl.sh
+
 set -euo pipefail
 
-module load GCCcore/14.3.0
-module load LLVM/20.1.8-GCCcore-14.3.0
-module load CMake/3.31.8-GCCcore-14.3.0
+if [[ "${1:-}" = "arc" ]]; then
+    # cluster
+    module load GCCcore/14.3.0
+    module load LLVM/20.1.8-GCCcore-14.3.0
+    module load CMake/3.31.8-GCCcore-14.3.0
 
-export LLVM_CONFIG=$(which llvm-config)
-llvm-config --version        # should print 20.1.8
+    JOBS=${SLURM_CPUS_PER_TASK:-8}
+else
+    # local linux machine: use system toolchain
+    JOBS=${JOBS:-$(nproc)}
+fi
 
-JOBS=${SLURM_CPUS_PER_TASK:-8}
+if [ -z "${LLVM_CONFIG:-}" ]; then
+    for c in llvm-config llvm-config-20 llvm-config-19 llvm-config-18 llvm-config-17 llvm-config-16 llvm-config-15 llvm-config-14; do
+        if command -v "$c" >/dev/null 2>&1; then
+            LLVM_CONFIG=$(command -v "$c")
+            break
+        fi
+    done
+fi
+[ -n "${LLVM_CONFIG:-}" ] || { echo "llvm-config not found (set LLVM_CONFIG=/path/to/llvm-config)" >&2; exit 1; }
+export LLVM_CONFIG
+"$LLVM_CONFIG" --version        # arc: should print 20.1.8
+
 BUILD_DIR=$HOME/afl_build
 mkdir -p "$BUILD_DIR"
 cd "$BUILD_DIR"

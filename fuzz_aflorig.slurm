@@ -11,11 +11,14 @@
 #SBATCH --error=./logs/aflorig-%A_%a.log
 #SBATCH --array=1-5
 
+# Usage:
+#   cluster: mkdir -p logs && sbatch fuzz_aflorig.sh arc
+#   local:   ./fuzz_aflorig.sh
+#            (optional: WRAP=/path/to/dir FUZZ_SECONDS=3600 ./fuzz_aflorig.sh)
+
 set -euo pipefail
 
 echo "node=$(hostname -s) cpu=$(lscpu | grep 'Model name' | sed 's/.*: *//')"
-
-module load GCCcore/14.3.0 LLVM/20.1.8-GCCcore-14.3.0
 
 # Only variables original AFL (2.52b) understands
 export AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1
@@ -23,19 +26,31 @@ export AFL_SKIP_CPUFREQ=1
 export AFL_NO_UI=1
 export AFL_NO_AFFINITY=1
 
-wrap="$HOME/afl_build"
 PROGRAM="pdftotext"
 VARIANT="orig"
 AFL_ROOT="$HOME/afl-orig"
-STATS_SUBDIR=""             # original AFL writes directly into <out>/
+STATS_SUBDIR=""
 
-TASK="${SLURM_ARRAY_TASK_ID:-1}"
-ID="${SLURM_ARRAY_JOB_ID:-${SLURM_JOB_ID:-0}}_${TASK}"
+if [[ "${1:-}" = "arc" ]]; then
+    # cluster
+    module load GCCcore/14.3.0 LLVM/20.1.8-GCCcore-14.3.0
+
+    wrap="$HOME/afl_build"
+    TASK="${SLURM_ARRAY_TASK_ID:-1}"
+    ID="${SLURM_ARRAY_JOB_ID:-${SLURM_JOB_ID:-0}}_${TASK}"
+    tmp_base="${TMPDIR:-/tmp}"
+else
+    # local linux machine
+    wrap="${WRAP:-$HOME/afl_build}"
+    TASK=1
+    ID="local_$(date +%s)_$$"
+    tmp_base="/tmp"
+fi
+
 FULL_ID="${PROGRAM}_${VARIANT}_${ID}"
 
-FUZZ_SECONDS=$((24 * 3600))
+FUZZ_SECONDS="${FUZZ_SECONDS:-$((24 * 3600))}"
 
-tmp_base="${TMPDIR:-/tmp}"
 tmp_input="$tmp_base/afl_${FULL_ID}"      # seeds (node-local)
 BIN_DIR="$tmp_base/bin_${FULL_ID}"        # private binary copy (node-local)
 WORK_DIR="$tmp_base/work_${FULL_ID}"      # cwd, so ./output/... files are per-task
