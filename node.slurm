@@ -2,7 +2,7 @@
 #SBATCH --job-name=afl_both
 #SBATCH --partition=normal_q
 #SBATCH --account=fuzzing
-#SBATCH --time=25:30:00
+#SBATCH --time=00:30:00
 #SBATCH --constraint=amd
 #SBATCH --nodes=1
 #SBATCH --exclusive
