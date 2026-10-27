@@ -21,7 +21,7 @@ PROGRAM="pdftotext"
 wrap="$HOME/afl_build"
 RESULTS_DIR="$wrap/results"
 tmp_base="${TMPDIR:-/tmp}"
-FUZZ_SECONDS="${FUZZ_SECONDS:-$((24 * 3600))}"
+FUZZ_SECONDS="${FUZZ_SECONDS:-$((30*60))}"
 JOB="${SLURM_JOB_ID:-0}"
 
 mkdir -p "$RESULTS_DIR" ./logs
