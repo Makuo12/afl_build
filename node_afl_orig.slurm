@@ -20,7 +20,7 @@ PROGRAM="pdftotext"
 VARIANT="orig"
 AFL_ROOT="$HOME/afl-orig"
 STATS_SUBDIR=""
-NUM_RUNS=10
+NUM_RUNS=5
 
 wrap="$HOME/afl_build"
 RESULTS_DIR="$wrap/results"

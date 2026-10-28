@@ -21,7 +21,7 @@ PROGRAM="pdftotext"
 VARIANT="stable"
 AFL_ROOT="$HOME/afl++"
 STATS_SUBDIR="default"
-NUM_RUNS=10
+NUM_RUNS=5
 
 wrap="$HOME/afl_build"
 RESULTS_DIR="$wrap/results"
