@@ -64,12 +64,13 @@ patch_xpdf_cmake() {
     echo "Missing $wrap/persistent_pdftotext.cc" >&2; exit 1; }
   cp "$wrap/persistent_pdftotext.cc" "$SRC/xpdf/persistent_pdftotext.cc"
 
+  # Remove a block added by an earlier version of this script, so the
+  # current one below is always the one in effect.
   if grep -q ">>> AFL++ persistent pdftotext" "$CML"; then
-    return                                   # already patched
+    sed -i '/# >>> AFL++ persistent pdftotext/,/# <<< AFL++ persistent pdftotext <<</d' "$CML"
   fi
 
   cat >> "$CML" <<'EOF'
-
 # >>> AFL++ persistent pdftotext (added by build_xpdf.sh) >>>
 # Built only with -DAFL_PERSISTENT_HARNESS=ON. Same sources, libraries and
 # settings as pdftotext, except pdftotext's main() is compiled from a copy
@@ -82,6 +83,9 @@ if(AFL_PERSISTENT_HARNESS)
   add_executable(pdftotext_persistent ${PT_SOURCES}
     "${CMAKE_CURRENT_BINARY_DIR}/pdftotext_pmain.cc"
     persistent_pdftotext.cc)
+  # The copy of pdftotext.cc lives in the build directory, so its quoted
+  # includes ("GlobalParams.h", ...) are no longer found next to it.
+  target_include_directories(pdftotext_persistent PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
   set_source_files_properties("${CMAKE_CURRENT_BINARY_DIR}/pdftotext_pmain.cc"
     PROPERTIES COMPILE_DEFINITIONS "main=pdftotext_main")
   foreach(prop INCLUDE_DIRECTORIES COMPILE_DEFINITIONS COMPILE_OPTIONS LINK_LIBRARIES LINK_OPTIONS)
