@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
   // the @@ file before every iteration, so argv stays valid and unchanged.
   // After 10000 iterations the process exits and AFL++ forks a fresh one,
   // which bounds any state or memory that leaks between iterations.
-  while (__AFL_LOOP(1000000)) {
+  while (__AFL_LOOP(100000)) {
 
     pdftotext_main(argc, argv);
 
